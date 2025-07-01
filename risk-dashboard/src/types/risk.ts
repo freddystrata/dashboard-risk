@@ -13,6 +13,7 @@ export interface RiskItem {
   status: 'Open' | 'In Progress' | 'Mitigated' | 'Closed';
   completionDate?: string;
   notes?: string;
+  comments?: string; // Comments/lessons learned
   createdAt: string;
   updatedAt: string;
 }

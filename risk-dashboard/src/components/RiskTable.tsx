@@ -7,12 +7,14 @@ import { RISK_LEVELS } from '@/utils/riskCalculations';
 interface RiskTableProps {
   risks: RiskItem[];
   onEditRisk?: (risk: RiskItem) => void;
+  onDeleteRisk?: (riskId: string) => void;
+  onUpdateStatus?: (riskId: string, status: 'Open' | 'In Progress' | 'Mitigated' | 'Closed') => void;
 }
 
 type SortField = keyof RiskItem;
 type SortDirection = 'asc' | 'desc';
 
-export default function RiskTable({ risks, onEditRisk }: RiskTableProps) {
+export default function RiskTable({ risks, onEditRisk, onDeleteRisk, onUpdateStatus }: RiskTableProps) {
   const [sortField, setSortField] = useState<SortField>('score');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filterLevel, setFilterLevel] = useState<string>('');
@@ -218,7 +220,13 @@ export default function RiskTable({ risks, onEditRisk }: RiskTableProps) {
               >
                 Status <SortIcon field="status" />
               </th>
-              {onEditRisk && (
+              <th 
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('comments')}
+              >
+                Comments/Lessons <SortIcon field="comments" />
+              </th>
+              {(onEditRisk || onDeleteRisk || onUpdateStatus) && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -263,23 +271,62 @@ export default function RiskTable({ risks, onEditRisk }: RiskTableProps) {
                     {risk.owner || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      risk.status === 'Open' ? 'bg-red-100 text-red-800' :
-                      risk.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
-                      risk.status === 'Mitigated' ? 'bg-blue-100 text-blue-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {risk.status}
-                    </span>
-                  </td>
-                  {onEditRisk && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button
-                        onClick={() => onEditRisk(risk)}
-                        className="text-indigo-600 hover:text-indigo-900"
+                    {onUpdateStatus ? (
+                      <select
+                        value={risk.status}
+                        onChange={(e) => onUpdateStatus(risk.id, e.target.value as 'Open' | 'In Progress' | 'Mitigated' | 'Closed')}
+                        className={`px-2 py-1 rounded text-xs font-medium border-0 ${
+                          risk.status === 'Open' ? 'bg-red-100 text-red-800' :
+                          risk.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                          risk.status === 'Mitigated' ? 'bg-blue-100 text-blue-800' :
+                          'bg-green-100 text-green-800'
+                        }`}
                       >
-                        Edit
-                      </button>
+                        <option value="Open">Open</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Mitigated">Mitigated</option>
+                        <option value="Closed">Closed</option>
+                      </select>
+                    ) : (
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        risk.status === 'Open' ? 'bg-red-100 text-red-800' :
+                        risk.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                        risk.status === 'Mitigated' ? 'bg-blue-100 text-blue-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {risk.status}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">
+                    <div className="max-w-xs truncate" title={risk.comments || 'No comments'}>
+                      {risk.comments || '-'}
+                    </div>
+                  </td>
+                  {(onEditRisk || onDeleteRisk || onUpdateStatus) && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="flex space-x-2">
+                        {onEditRisk && (
+                          <button
+                            onClick={() => onEditRisk(risk)}
+                            className="text-indigo-600 hover:text-indigo-900"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {onDeleteRisk && (
+                          <button
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to delete this risk?')) {
+                                onDeleteRisk(risk.id);
+                              }
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>

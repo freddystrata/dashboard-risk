@@ -14,7 +14,8 @@ const sampleRiskData = [
     owner: "IT Security Team",
     category: "Cybersecurity",
     status: 'In Progress' as const,
-    notes: "Implementing multi-factor authentication"
+    notes: "Implementing multi-factor authentication",
+    comments: "Previous breach cost $50K in downtime. MFA implementation 60% complete."
   },
   {
     description: "Supply chain disruption affecting production",
@@ -24,7 +25,8 @@ const sampleRiskData = [
     owner: "Operations Manager",
     category: "Operations",
     status: 'Open' as const,
-    notes: "Evaluating alternative suppliers"
+    notes: "Evaluating alternative suppliers",
+    comments: "COVID-19 taught us the importance of supplier diversification."
   },
   {
     description: "Key personnel departure without knowledge transfer",
@@ -34,7 +36,8 @@ const sampleRiskData = [
     owner: "HR Department",
     category: "Human Resources",
     status: 'Mitigated' as const,
-    notes: "Documentation and cross-training completed"
+    notes: "Documentation and cross-training completed",
+    comments: "Lost key developer in 2023. Now have mandatory knowledge sharing sessions."
   },
   {
     description: "Regulatory compliance failure in new jurisdiction",
@@ -44,7 +47,8 @@ const sampleRiskData = [
     owner: "Legal Team",
     category: "Compliance",
     status: 'Open' as const,
-    notes: "Engaging local legal counsel"
+    notes: "Engaging local legal counsel",
+    comments: "Regulatory landscape constantly changing. Need dedicated compliance officer."
   },
   {
     description: "Server hardware failure during peak season",
@@ -54,7 +58,8 @@ const sampleRiskData = [
     owner: "Infrastructure Team",
     category: "Technology",
     status: 'Closed' as const,
-    notes: "Redundant systems implemented and tested"
+    notes: "Redundant systems implemented and tested",
+    comments: "Had outage in Q3 2023. Invested in redundancy and backup systems."
   },
   {
     description: "Market downturn affecting customer demand",
@@ -64,7 +69,8 @@ const sampleRiskData = [
     owner: "Sales Director",
     category: "Market",
     status: 'Open' as const,
-    notes: "Monitoring economic indicators"
+    notes: "Monitoring economic indicators",
+    comments: "2022 market volatility showed our sensitivity to economic cycles."
   },
   {
     description: "Third-party software license compliance issue",
@@ -74,7 +80,8 @@ const sampleRiskData = [
     owner: "IT Department",
     category: "Legal",
     status: 'Mitigated' as const,
-    notes: "License audit completed and documentation updated"
+    notes: "License audit completed and documentation updated",
+    comments: "Annual license review now mandatory. Automated tracking implemented."
   }
 ];
 

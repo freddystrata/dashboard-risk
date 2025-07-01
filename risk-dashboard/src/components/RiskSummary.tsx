@@ -36,18 +36,18 @@ export default function RiskSummary({ risks }: RiskSummaryProps) {
       {/* Risk Level Distribution */}
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Risk Distribution by Level</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {RISK_LEVELS.map(level => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          {RISK_LEVELS.sort((a, b) => a.threshold - b.threshold).map(level => {
             const count = summary.byLevel[level.name] || 0;
             const percentage = summary.total > 0 ? (count / summary.total * 100).toFixed(1) : '0';
             
             return (
               <div
                 key={level.name}
-                className={`p-4 rounded-lg border-2 text-center ${level.color} ${level.textColor || 'text-gray-800'}`}
+                className={`p-4 rounded-lg border-2 text-center ${level.color} ${level.textColor || 'text-gray-800'} min-h-[100px] flex flex-col justify-center`}
               >
                 <div className="text-2xl font-bold">{count}</div>
-                <div className="text-sm font-medium">{level.name}</div>
+                <div className="text-sm font-medium break-words">{level.name}</div>
                 <div className="text-xs opacity-75">{percentage}%</div>
               </div>
             );
