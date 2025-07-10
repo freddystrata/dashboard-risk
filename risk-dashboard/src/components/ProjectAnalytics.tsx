@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { RiskItem, ProjectRiskSummary } from '@/types/risk';
+import { RiskItem } from '@/types/risk';
 import { generateProjectRiskSummary } from '@/utils/riskCalculations';
 import { exportProjectSummaryToExcel } from '@/utils/excelExport';
 

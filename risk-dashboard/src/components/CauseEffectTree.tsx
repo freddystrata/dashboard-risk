@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { RiskItem, CauseEffectNode, CauseEffectTree } from '@/types/risk';
+import { RiskItem, CauseEffectNode } from '@/types/risk';
 import { exportCauseEffectToExcel } from '@/utils/excelExport';
 
 interface CauseEffectTreeProps {
@@ -10,8 +10,6 @@ interface CauseEffectTreeProps {
 
 export default function CauseEffectTree({ risks }: CauseEffectTreeProps) {
   const [selectedProject, setSelectedProject] = useState<string>('');
-  const [showNodeEditor, setShowNodeEditor] = useState(false);
-  const [editingNode, setEditingNode] = useState<CauseEffectNode | null>(null);
 
   // Get unique projects
   const projects = useMemo(() => 
@@ -64,7 +62,7 @@ export default function CauseEffectTree({ risks }: CauseEffectTreeProps) {
   };
 
   const renderConnectionLines = () => {
-    const lines: JSX.Element[] = [];
+    const lines: React.ReactElement[] = [];
     
     Object.values(causeEffectData).forEach(node => {
       node.children.forEach(childId => {
@@ -101,7 +99,7 @@ export default function CauseEffectTree({ risks }: CauseEffectTreeProps) {
             className="border border-gray-300 rounded-md px-3 py-2"
           >
             <option value="">Select Project</option>
-            {projects.map(project => (
+            {projects.map((project) => (
               <option key={project} value={project}>
                 {project}
               </option>
@@ -168,10 +166,9 @@ export default function CauseEffectTree({ risks }: CauseEffectTreeProps) {
                   {Object.values(causeEffectData).map(node => (
                     <g key={node.id}>
                       <foreignObject x={node.x} y={node.y} width="240" height="60">
-                        <div
-                          className={`p-3 rounded-lg border-2 shadow-md ${getNodeColor(node)} cursor-pointer hover:shadow-lg transition-shadow`}
-                          onClick={() => setEditingNode(node)}
-                        >
+                                                 <div
+                           className={`p-3 rounded-lg border-2 shadow-md ${getNodeColor(node)} cursor-pointer hover:shadow-lg transition-shadow`}
+                         >
                           <div className="text-xs font-semibold mb-1">
                             {node.type.replace('_', ' ').toUpperCase()}
                           </div>
