@@ -1,19 +1,43 @@
-import { RiskItem, RiskLevel, RiskSummary } from '@/types/risk';
+import { RiskItem, RiskLevel, RiskSummary, ProjectRiskSummary, RiskTimelineEntry } from '@/types/risk';
 
+// Updated risk levels for 1-5 scale (max score 25)
 export const RISK_LEVELS: RiskLevel[] = [
-  { threshold: 1, name: "LOWEST", color: "bg-green-200", textColor: "text-green-800" },
-  { threshold: 2, name: "VERY LOW", color: "bg-green-300", textColor: "text-green-800" },
-  { threshold: 3, name: "LOW", color: "bg-yellow-300", textColor: "text-yellow-800" },
-  { threshold: 4, name: "MEDIUM LOW", color: "bg-orange-300", textColor: "text-orange-800" },
-  { threshold: 6, name: "MEDIUM HIGH", color: "bg-orange-500", textColor: "text-orange-100" },
-  { threshold: 9, name: "HIGHEST", color: "bg-red-600", textColor: "text-red-100" },
+  { threshold: 1, name: "ACCEPTABLE", color: "bg-green-200", textColor: "text-green-800" },
+  { threshold: 2, name: "ACCEPTABLE", color: "bg-green-300", textColor: "text-green-800" },
+  { threshold: 3, name: "VERY LOW", color: "bg-green-400", textColor: "text-green-800" },
+  { threshold: 4, name: "VERY LOW", color: "bg-green-500", textColor: "text-green-100" },
+  { threshold: 5, name: "LOW", color: "bg-yellow-300", textColor: "text-yellow-800" },
+  { threshold: 6, name: "LOW", color: "bg-yellow-400", textColor: "text-yellow-800" },
+  { threshold: 8, name: "SIGNIFICANT", color: "bg-orange-400", textColor: "text-orange-800" },
+  { threshold: 9, name: "SIGNIFICANT", color: "bg-orange-500", textColor: "text-orange-100" },
+  { threshold: 10, name: "HIGH", color: "bg-red-400", textColor: "text-red-100" },
+  { threshold: 12, name: "HIGH", color: "bg-red-500", textColor: "text-red-100" },
+  { threshold: 15, name: "VERY HIGH", color: "bg-red-600", textColor: "text-red-100" },
+  { threshold: 16, name: "VERY HIGH", color: "bg-red-700", textColor: "text-red-100" },
+  { threshold: 20, name: "PROCEED AT YOUR OWN RISK", color: "bg-red-800", textColor: "text-red-100" },
+  { threshold: 25, name: "PROCEED AT YOUR OWN RISK", color: "bg-red-900", textColor: "text-red-100" },
+];
+
+/**
+ * Risk Matrix for 1-5 scale
+ * Probability (rows) × Impact (columns)
+ */
+export const RISK_MATRIX: number[][] = [
+  [1, 2, 3, 4, 5],    // Probability 1
+  [2, 4, 6, 8, 10],   // Probability 2
+  [3, 6, 9, 12, 15],  // Probability 3
+  [4, 8, 12, 16, 20], // Probability 4
+  [5, 10, 15, 20, 25] // Probability 5
 ];
 
 /**
  * Calculate risk score (Probability × Impact)
  */
 export function calculateRiskScore(probability: number, impact: number): number {
-  return probability * impact;
+  if (probability < 1 || probability > 5 || impact < 1 || impact > 5) {
+    throw new Error('Probability and Impact must be between 1 and 5');
+  }
+  return RISK_MATRIX[probability - 1][impact - 1];
 }
 
 /**
@@ -21,19 +45,18 @@ export function calculateRiskScore(probability: number, impact: number): number 
  */
 export function getRiskLevel(score: number): RiskLevel {
   // Find the highest threshold that the score meets or exceeds
-  // Sort from highest to lowest threshold and find first match
   const sortedLevels = [...RISK_LEVELS].sort((a, b) => b.threshold - a.threshold);
   const level = sortedLevels.find(level => score >= level.threshold);
   
   // Default to lowest level if score is below all thresholds
-  return level || RISK_LEVELS.find(l => l.threshold === 1) || RISK_LEVELS[0];
+  return level || RISK_LEVELS[0];
 }
 
 /**
  * Calculate residual risk score after mitigation
  */
 export function calculateResidualScore(score: number, mitigationEffectiveness: number): number {
-  return score * (1 - mitigationEffectiveness);
+  return Math.round((score * (1 - mitigationEffectiveness)) * 10) / 10;
 }
 
 /**
@@ -68,6 +91,7 @@ export function calculateRiskMetrics(
 export function generateRiskSummary(risks: RiskItem[]): RiskSummary {
   const byLevel: Record<string, number> = {};
   const byStatus: Record<string, number> = {};
+  const byProject: Record<string, number> = {};
 
   // Initialize counters
   RISK_LEVELS.forEach(level => {
@@ -80,27 +104,110 @@ export function generateRiskSummary(risks: RiskItem[]): RiskSummary {
     
     // Count by status
     byStatus[risk.status] = (byStatus[risk.status] || 0) + 1;
+    
+    // Count by project
+    if (risk.project) {
+      byProject[risk.project] = (byProject[risk.project] || 0) + 1;
+    }
   });
 
   return {
     total: risks.length,
     byLevel,
     byStatus,
+    byProject,
   };
 }
 
 /**
- * Validate risk probability and impact values
+ * Generate project-specific risk summary
+ */
+export function generateProjectRiskSummary(risks: RiskItem[], projectName: string): ProjectRiskSummary {
+  const projectRisks = risks.filter(risk => risk.project === projectName);
+  
+  const highRisks = projectRisks.filter(risk => 
+    ['HIGH', 'VERY HIGH', 'PROCEED AT YOUR OWN RISK'].includes(risk.riskLevel)
+  ).length;
+  
+  const openRisks = projectRisks.filter(risk => 
+    ['Open', 'In Progress'].includes(risk.status)
+  ).length;
+  
+  const mitigatedRisks = projectRisks.filter(risk => 
+    ['Mitigated', 'Closed'].includes(risk.status)
+  ).length;
+  
+  const averageScore = projectRisks.length > 0 
+    ? projectRisks.reduce((sum, risk) => sum + risk.score, 0) / projectRisks.length 
+    : 0;
+  
+  // Simple trend calculation based on recent risks
+  const recentRisks = projectRisks.filter(risk => {
+    const riskDate = new Date(risk.createdAt);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return riskDate > thirtyDaysAgo;
+  });
+  
+  const riskTrend = recentRisks.length > projectRisks.length * 0.3 ? 'increasing' : 
+                   recentRisks.length < projectRisks.length * 0.1 ? 'decreasing' : 'stable';
+  
+  // Profitability impact based on high-risk count and average score
+  const expectedProfitabilityImpact = 
+    highRisks > 3 || averageScore > 15 ? 'high' :
+    highRisks > 1 || averageScore > 8 ? 'medium' : 'low';
+  
+  // Generate timeline
+  const timeline: RiskTimelineEntry[] = projectRisks
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .map(risk => ({
+      date: risk.createdAt,
+      riskId: risk.id,
+      event: 'created' as const,
+      description: `Risk created: ${risk.description.substring(0, 50)}...`,
+      riskLevel: risk.riskLevel
+    }));
+  
+  // Add mitigation events
+  projectRisks.forEach(risk => {
+    if (risk.mitigationDate) {
+      timeline.push({
+        date: risk.mitigationDate,
+        riskId: risk.id,
+        event: 'mitigated',
+        description: `Risk mitigated: ${risk.description.substring(0, 50)}...`,
+        riskLevel: risk.residualRiskLevel
+      });
+    }
+  });
+  
+  timeline.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  return {
+    projectName,
+    totalRisks: projectRisks.length,
+    highRisks,
+    openRisks,
+    mitigatedRisks,
+    averageScore: Math.round(averageScore * 10) / 10,
+    riskTrend,
+    expectedProfitabilityImpact,
+    timeline: timeline.slice(-10) // Last 10 events
+  };
+}
+
+/**
+ * Validate risk probability and impact values (updated for 1-5 scale)
  */
 export function validateRiskValues(probability: number, impact: number): string[] {
   const errors: string[] = [];
 
-  if (probability < 1 || probability > 9) {
-    errors.push('Probability must be between 1 and 9');
+  if (probability < 1 || probability > 5) {
+    errors.push('Probability must be between 1 and 5');
   }
 
-  if (impact < 1 || impact > 9) {
-    errors.push('Impact must be between 1 and 9');
+  if (impact < 1 || impact > 5) {
+    errors.push('Impact must be between 1 and 5');
   }
 
   return errors;
@@ -129,8 +236,12 @@ export function createRiskItem(data: {
   mitigationEffectiveness?: number;
   owner?: string;
   category?: string;
+  project?: string;
   status?: 'Open' | 'In Progress' | 'Mitigated' | 'Closed';
   notes?: string;
+  causes?: string[];
+  effects?: string[];
+  rootCause?: boolean;
 }): Omit<RiskItem, 'id'> {
   const metrics = calculateRiskMetrics(
     data.probability, 
@@ -147,8 +258,12 @@ export function createRiskItem(data: {
     mitigationEffectiveness: data.mitigationEffectiveness || 0,
     owner: data.owner,
     category: data.category,
+    project: data.project,
     status: data.status || 'Open',
     notes: data.notes,
+    causes: data.causes || [],
+    effects: data.effects || [],
+    rootCause: data.rootCause || false,
     createdAt: now,
     updatedAt: now,
     ...metrics,
