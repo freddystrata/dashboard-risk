@@ -5,8 +5,11 @@ import RiskTable from '@/components/RiskTable';
 import RiskSummary from '@/components/RiskSummary';
 import RiskForm from '@/components/RiskForm';
 import ExcelUpload from '@/components/ExcelUpload';
+import ProjectAnalytics from '@/components/ProjectAnalytics';
+import CauseEffectTree from '@/components/CauseEffectTree';
 import { SAMPLE_RISKS } from '@/data/sampleRisks';
 import { RiskItem } from '@/types/risk';
+import { exportRisksToExcel } from '@/utils/excelExport';
 
 function generateId(): string {
   return Math.random().toString(36).substr(2, 9);
@@ -14,7 +17,7 @@ function generateId(): string {
 
 export default function RiskDashboard() {
   const [risks, setRisks] = useState<RiskItem[]>(SAMPLE_RISKS);
-  const [activeTab, setActiveTab] = useState<'summary' | 'table'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'table' | 'projects' | 'causeeffect'>('summary');
   
   // Modal states
   const [isRiskFormOpen, setIsRiskFormOpen] = useState(false);
@@ -69,6 +72,10 @@ export default function RiskDashboard() {
     setIsRiskFormOpen(false);
   };
 
+  const handleExportToExcel = () => {
+    exportRisksToExcel(risks, `risk-register-${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
@@ -77,6 +84,12 @@ export default function RiskDashboard() {
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-900">Risk Management Dashboard</h1>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={handleExportToExcel}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+              >
+                📊 Export Excel
+              </button>
               <button
                 onClick={() => setIsExcelUploadOpen(true)}
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
@@ -109,7 +122,7 @@ export default function RiskDashboard() {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              Dashboard Summary
+              📊 Dashboard Summary
             </button>
             <button
               onClick={() => setActiveTab('table')}
@@ -119,7 +132,27 @@ export default function RiskDashboard() {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              Risk Table
+              📋 Risk Table
+            </button>
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'projects'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              🏗️ Project Analytics
+            </button>
+            <button
+              onClick={() => setActiveTab('causeeffect')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'causeeffect'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              🌳 Cause-Effect Tree
             </button>
           </nav>
         </div>
@@ -136,31 +169,33 @@ export default function RiskDashboard() {
             onUpdateStatus={handleUpdateStatus}
           />
         )}
+        {activeTab === 'projects' && <ProjectAnalytics risks={risks} />}
+        {activeTab === 'causeeffect' && <CauseEffectTree risks={risks} />}
       </main>
 
-              {/* Footer */}
-        <footer className="bg-white border-t border-gray-200 mt-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="text-center text-sm text-gray-500">
-              <p>Risk Management Dashboard - Enhanced with Full Data Management</p>
-              <p>Built with Next.js, TypeScript, and Tailwind CSS</p>
-            </div>
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="text-center text-sm text-gray-500">
+            <p>Project Risk Management Dashboard - Enhanced with Analytics & Cause-Effect Analysis</p>
+            <p>Built with Next.js, TypeScript, and Tailwind CSS | 1-5 Risk Scoring Matrix</p>
           </div>
-        </footer>
+        </div>
+      </footer>
 
-        {/* Modals */}
-        <RiskForm
-          risk={editingRisk}
-          onSave={editingRisk ? handleUpdateRisk : handleAddRisk}
-          onCancel={handleCloseRiskForm}
-          isOpen={isRiskFormOpen}
-        />
+      {/* Modals */}
+      <RiskForm
+        risk={editingRisk}
+        onSave={editingRisk ? handleUpdateRisk : handleAddRisk}
+        onCancel={handleCloseRiskForm}
+        isOpen={isRiskFormOpen}
+      />
 
-        <ExcelUpload
-          onImport={handleExcelImport}
-          isOpen={isExcelUploadOpen}
-          onClose={() => setIsExcelUploadOpen(false)}
-        />
-      </div>
-    );
-  }
+      <ExcelUpload
+        onImport={handleExcelImport}
+        isOpen={isExcelUploadOpen}
+        onClose={() => setIsExcelUploadOpen(false)}
+      />
+    </div>
+  );
+}
